@@ -1,0 +1,206 @@
+[gd_scene load_steps=24 format=3 uid="uid://b317ev4vnerlq"]
+
+[ext_resource type="Script" path="res://first_person_controller/first_person_controller.gd" id="1_jjech"]
+[ext_resource type="PackedScene" uid="uid://c7iy7bajh3wil" path="res://first_person_controller/ui/interactions/interaction_pointer.tscn" id="2_72auq"]
+[ext_resource type="Script" path="res://first_person_controller/state_machine/finite_state_machine.gd" id="2_ulv18"]
+[ext_resource type="Script" path="res://first_person_controller/state_machine/states/idle.gd" id="3_ebmny"]
+[ext_resource type="PackedScene" uid="uid://dma5qg6j8mij0" path="res://first_person_controller/ui/scan/scan_viewport.tscn" id="3_qg1n4"]
+[ext_resource type="Script" path="res://first_person_controller/state_machine/states/walk.gd" id="4_4qxtv"]
+[ext_resource type="Script" path="res://first_person_controller/interactions/interactor.gd" id="4_er5sy"]
+[ext_resource type="Script" path="res://first_person_controller/state_machine/states/jump.gd" id="5_giftp"]
+[ext_resource type="Script" path="res://first_person_controller/hands.gd" id="5_h88yb"]
+[ext_resource type="Script" path="res://first_person_controller/state_machine/states/run.gd" id="5_jx43c"]
+[ext_resource type="Script" path="res://first_person_controller/state_machine/states/crouch.gd" id="7_skljo"]
+[ext_resource type="Script" path="res://first_person_controller/state_machine/states/crawl.gd" id="8_mxk70"]
+[ext_resource type="Script" path="res://first_person_controller/state_machine/states/slide.gd" id="9_1fvee"]
+[ext_resource type="Script" path="res://first_person_controller/state_machine/states/wall_run.gd" id="10_m2dyl"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bnnbn"]
+radius = 0.313218
+height = 1.93158
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_5kjma"]
+radius = 0.313
+height = 1.2
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_qfu3q"]
+radius = 0.25
+height = 0.748248
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_rm6ri"]
+radius = 0.3
+height = 1.4
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_yu137"]
+radius = 0.1
+
+[sub_resource type="Animation" id="Animation_387f7"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Neck:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0.671348, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_h6ak6"]
+resource_name = "crawl"
+length = 0.3
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Neck:position")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.3),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector3(0, 0.0208851, 0), Vector3(0, -0.438813, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_1o3ch"]
+resource_name = "crouch"
+length = 0.3
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Neck:position")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.3),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector3(0, 0.671348, 0), Vector3(0, 0.0208851, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_ld1mg"]
+_data = {
+"RESET": SubResource("Animation_387f7"),
+"crawl": SubResource("Animation_h6ak6"),
+"crouch": SubResource("Animation_1o3ch")
+}
+
+[node name="FirstPersonController" type="CharacterBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.895294, 0)
+collision_layer = 2
+collision_mask = 13
+script = ExtResource("1_jjech")
+CAN_JUMP = true
+CAN_SLIDE = true
+
+[node name="InteractionUI" type="CanvasLayer" parent="."]
+
+[node name="InteractionPointer" parent="InteractionUI" instance=ExtResource("2_72auq")]
+
+[node name="ScanUI" type="CanvasLayer" parent="."]
+
+[node name="ScanViewport" parent="ScanUI" node_paths=PackedStringArray("current_camera", "interactive_spot", "scan_light") instance=ExtResource("3_qg1n4")]
+current_camera = NodePath("../../Neck/Head/Eyes/Camera3D")
+interactive_spot = NodePath("../../Neck/Head/Eyes/InteractiveSpot")
+scan_light = NodePath("../../Neck/Head/Eyes/ScanSpotLight3D")
+
+[node name="StandingCollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0669819, 0)
+shape = SubResource("CapsuleShape3D_bnnbn")
+
+[node name="CrouchCollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.301707, 0)
+shape = SubResource("CapsuleShape3D_5kjma")
+
+[node name="CrawlCollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5274, 0)
+shape = SubResource("CapsuleShape3D_qfu3q")
+
+[node name="CeilShapeCast3D" type="ShapeCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.456799, 0)
+shape = SubResource("CapsuleShape3D_rm6ri")
+target_position = Vector3(0, 0, 0)
+
+[node name="Neck" type="Node3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.671348, 0)
+
+[node name="Head" type="Node3D" parent="Neck"]
+unique_name_in_owner = true
+
+[node name="Eyes" type="Node3D" parent="Neck/Head"]
+unique_name_in_owner = true
+
+[node name="Camera3D" type="Camera3D" parent="Neck/Head/Eyes"]
+unique_name_in_owner = true
+
+[node name="ScanSpotLight3D" type="SpotLight3D" parent="Neck/Head/Eyes"]
+unique_name_in_owner = true
+light_energy = 2.5
+light_indirect_energy = 2.1
+spot_range = 1.0
+spot_attenuation = 2.0
+spot_angle = 23.0
+spot_angle_attenuation = 0.841
+
+[node name="InteractiveSpot" type="Marker3D" parent="Neck/Head/Eyes"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.837139)
+
+[node name="Interactor" type="RayCast3D" parent="Neck/Head/Eyes" node_paths=PackedStringArray("actor")]
+target_position = Vector3(0, 0, -1.5)
+script = ExtResource("4_er5sy")
+actor = NodePath("../../../..")
+
+[node name="Hands" type="Node3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.447577, 0)
+script = ExtResource("5_h88yb")
+
+[node name="Hand" type="Generic6DOFJoint3D" parent="Hands"]
+node_a = NodePath("../HandLimit")
+
+[node name="HandLimit" type="StaticBody3D" parent="Hands"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1)
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hands/HandLimit"]
+shape = SubResource("SphereShape3D_yu137")
+
+[node name="FiniteStateMachine" type="Node" parent="." node_paths=PackedStringArray("current_state")]
+script = ExtResource("2_ulv18")
+current_state = NodePath("Idle")
+
+[node name="Idle" type="Node" parent="FiniteStateMachine"]
+script = ExtResource("3_ebmny")
+
+[node name="Walk" type="Node" parent="FiniteStateMachine"]
+script = ExtResource("4_4qxtv")
+
+[node name="Run" type="Node" parent="FiniteStateMachine"]
+script = ExtResource("5_jx43c")
+
+[node name="Jump" type="Node" parent="FiniteStateMachine"]
+script = ExtResource("5_giftp")
+jump_times = 2
+
+[node name="Crouch" type="Node" parent="FiniteStateMachine"]
+script = ExtResource("7_skljo")
+
+[node name="Crawl" type="Node" parent="FiniteStateMachine"]
+script = ExtResource("8_mxk70")
+
+[node name="Slide" type="Node" parent="FiniteStateMachine"]
+script = ExtResource("9_1fvee")
+
+[node name="WallRun" type="Node" parent="FiniteStateMachine"]
+script = ExtResource("10_m2dyl")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_ld1mg")
+}
